@@ -55,8 +55,8 @@
     </div>
   </main>
 
-  <!-- Lofi bakgrundsmusik (MP3) -->
-  <audio id="bgm" src="lofi.mp3" preload="auto" loop></audio>
+  <!-- Lofi bakgrundsmusik -->
+  <audio id="bgm" src="./lofi.mp3" preload="auto" loop playsinline></audio>
 
   <dialog id="ageGate">
     <form method="dialog" class="sheet">
@@ -105,22 +105,39 @@
   const dlgShop = document.getElementById('shop');
   const dlgRescue = document.getElementById('rescue');
 
-  // Audio via MP3
+  // Audio via MP3 (robust toggle)
   const audioBtn = document.getElementById('btn-audio');
   const bgm = document.getElementById('bgm');
   let musicOn = false;
-  if (bgm) {
-    bgm.volume = 0.15; // låg volym
+
+  if (bgm && audioBtn) {
+    bgm.volume = 0.15;
+    bgm.preload = 'auto';
+    bgm.muted = false;
     audioBtn.textContent = '🔇 Lofi';
-    audioBtn.addEventListener('click', async () => {
+
+    async function tryPlay() {
       try {
-        if (!musicOn) { await bgm.play(); musicOn = true; audioBtn.textContent = '🎧 Lofi'; }
-        else { bgm.pause(); musicOn = false; audioBtn.textContent = '🔇 Lofi'; }
-      } catch (e) { console.warn('Audio play blocked tills användarinteraktion.', e); }
+        bgm.muted = false;
+        if (bgm.currentTime > (bgm.duration || 1) - 0.5) bgm.currentTime = 0;
+        await bgm.play();
+        musicOn = true;
+        audioBtn.textContent = '🎧 Lofi';
+      } catch (e) {
+        console.warn('Play blockerad:', e);
+        musicOn = false;
+        audioBtn.textContent = '🔇 Lofi';
+      }
+    }
+
+    audioBtn.addEventListener('click', async () => {
+      if (!musicOn) await tryPlay();
+      else { bgm.pause(); musicOn = false; audioBtn.textContent = '🔇 Lofi'; }
     });
-    document.body.addEventListener('keydown', async () => {
-      if (!musicOn) { try { await bgm.play(); musicOn = true; audioBtn.textContent = '🎧 Lofi'; } catch(_){} }
-    }, { once:true });
+
+    const unlock = async () => { if (!musicOn) await tryPlay(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
   }
 
   // Input
@@ -186,18 +203,4 @@
     ctx.fillStyle='#fff'; for(let i=0;i<6;i++){ const x=(i*180)%W; const y=60+((i%2)*30); ctx.globalAlpha=0.25; ctx.beginPath(); ctx.arc(x,y,40,0,Math.PI*2); ctx.arc(x+40,y+10,28,0,Math.PI*2); ctx.arc(x+80,y,36,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
     ctx.fillStyle='#d7f0ff'; ctx.fillRect(0, 440, W, 100);
     ctx.fillStyle=block; for(const p of platforms) ctx.fillRect(p[0],p[1],p[2],p[3]);
-    for(const m of movers){const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy; ctx.fillStyle='#ffd6ec'; ctx.fillRect(m.x+ox,m.y+oy,m.w,m.h);}
-    ctx.fillStyle=spike; for(const s of spikes){const[x,y,size]=s; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+size,y); ctx.lineTo(x+size/2,y-size); ctx.closePath(); ctx.fill();}
-    ctx.fillStyle='#c6a3ff'; for(const b of blobs) ctx.fillRect(b.x,b.y,b.w,b.h);
-    for(const h of hearts){ if(h.t) continue; ctx.fillStyle=heartC; ctx.fillRect(h.x-2,h.y,4,4); ctx.fillRect(h.x-4,h.y+2,8,4); ctx.fillRect(h.x-6,h.y+4,12,4); ctx.fillRect(h.x-4,h.y+8,8,4); ctx.fillRect(h.x-2,h.y+10,4,4); }
-    ctx.fillStyle='#ffb3c7'; ctx.fillRect(princess.x,princess.y,princess.w,princess.h);
-    ctx.fillStyle='#222'; ctx.fillRect(player.x,player.y,player.w,player.h);
-  }
-
-  let last=performance.now(); won=false;
-  function loop(t){ const dt=t-last; last=t; if(!won) update(dt); draw(); requestAnimationFrame(loop); }
-  reset(); requestAnimationFrame(loop);
-})();
-</script>
-</body>
-</html>
+    for(const m of movers){const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy; ctx.fillStyle='#ffd6ec'; ctx.fillRect(m.x+ox,m.y+oy,m.w,m.h
