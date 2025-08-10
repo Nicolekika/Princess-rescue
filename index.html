@@ -1,4 +1,3 @@
-<title>Princess Rescue — LIVE</title>
 <!doctype html>
 <html lang="sv">
 <head>
@@ -141,32 +140,4 @@ dialog .sheet{background:#fff;padding:16px;min-width:min(520px,92vw);border-radi
     player.x+=player.vx;
     for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rectsOverlap(player,r)){ if(player.vx>0) player.x=r.x-player.w; else if(player.vx<0) player.x=r.x+r.w; }}
     player.y+=player.vy; player.onGround=false;
-    for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rectsOverlap(player,r)){ if(player.vy>0){player.y=r.y-player.h;player.vy=0;player.onGround=true;} else if(player.vy<0){player.y=r.y+r.h;player.vy=0;} }}
-    for(const m of movers){m.t+=dt;const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy;const r={x:m.x+ox,y:m.y+oy,w:m.w,h:m.h}; if(rectsOverlap(player,r)&&player.vy>=0){player.y=r.y-player.h;player.vy=0;player.onGround=true;player.x+=(m.dx!==0?Math.cos(m.t*0.001)*m.range*0.03*m.dx:0);}}
-    if(jump && player.onGround){player.vy=-JUMP; player.onGround=false;}
-    for(const s of [[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]]){const[sx,sy,size]=s;const px=player.x+player.w/2,py=player.y+player.h-2; if(pointInTriangle(px,py,sx,sy,sx+size,sy,sx+size/2,sy-size)){die();break;}}
-    for(const b of blobs){b.x+=b.vx; if(b.x<b.minX||b.x+b.w>b.maxX) b.vx*=-1; if(rectsOverlap(player,b)){die();break;}}
-    for(const h of hearts){if(!h.taken){const dx=(player.x+player.w/2)-h.x,dy=(player.y+player.h/2)-h.y; if(Math.hypot(dx,dy)<20){h.taken=true;collectCount++;heartsEl.textContent=collectCount;} }}
-    const r={x:princess.x,y:princess.y,w:princess.w,h:princess.h}; if(collectCount>=5 && rectsOverlap(player,r)){showRescue();}
-    const t=(performance.now()-startTime)/1000; timeEl.textContent=t.toFixed(1)+'s';
-  }
-  function die(){ livesEl.textContent=--lives; if(lives<=0) reset(); else {player.x=60;player.y=420;player.vx=0;player.vy=0;}}
-  function showRescue(){ dlgRescue.showModal(); won=true; stopMusic(); }
-  function draw(){ ctx.fillStyle=sky; ctx.fillRect(0,0,W,H); ctx.fillStyle='#d7f0ff'; ctx.fillRect(0,440,W,100);
-    ctx.fillStyle=block; for(const p of platforms) ctx.fillRect(p[0],p[1],p[2],p[3]);
-    for(const m of movers){const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy; ctx.fillStyle='#ffd6ec'; ctx.fillRect(m.x+ox,m.y+oy,m.w,m.h);}
-    ctx.fillStyle=spike; for(const s of [[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]]){const[x,y,size]=s; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+size,y); ctx.lineTo(x+size/2,y-size); ctx.closePath(); ctx.fill();}
-    ctx.fillStyle='#c6a3ff'; for(const b of blobs) ctx.fillRect(b.x,b.y,b.w,b.h);
-    for(const h of hearts){ if(h.taken) continue; ctx.fillStyle=heartC; ctx.fillRect(h.x-2,h.y,4,4); ctx.fillRect(h.x-4,h.y+2,8,4); ctx.fillRect(h.x-6,h.y+4,12,4); ctx.fillRect(h.x-4,h.y+8,8,4); ctx.fillRect(h.x-2,h.y+10,4,4); }
-    ctx.fillStyle='#ffb3c7'; ctx.fillRect(princess.x,princess.y,princess.w,princess.h);
-    ctx.fillStyle='#222'; ctx.fillRect(player.x,player.y,player.w,player.h);
-  }
-  let last=performance.now(),won=false; function loop(t){const dt=t-last; last=t; if(!won) update(dt); draw(); requestAnimationFrame(loop);}
-  let lives=3, blobs=[], hearts=[];
-  function initActors(){ blobs=[{x:330,y:364,w:26,h:18,vx:1,minX:320,maxX:440},{x:740,y:244,w:26,h:18,vx:-1,minX:720,maxX:840}]; hearts=[{x:185,y:400,r:7,taken:false},{x:350,y:340,r:7,taken:false},{x:550,y:280,r:7,taken:false},{x:750,y:220,r:7,taken:false},{x:880,y:150,r:7,taken:false}]; }
-  if(!localStorage.getItem('seen_how')){ setTimeout(()=>{ dlgHow.showModal(); localStorage.setItem('seen_how','yes'); },50); }
-  initActors(); reset(); requestAnimationFrame(loop);
-})();
-</script>
-</body>
-</html>
+    for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rect
