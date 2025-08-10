@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Princess Rescue — Full (18+, Lofi)</title>
+  <title>Princess Rescue — Full (18+, Super Soft Lofi)</title>
   <style>
   :root { --bg:#fff9fc; --ink:#3a2f35; --line:#f2d9e8; --panel:#ffffffcc; --pill:#f7e7f1; --cta:#f9dff0; --shadow:0 10px 30px rgba(125,89,110,.12); }
   *{box-sizing:border-box}
@@ -45,7 +45,7 @@
         <div class="stat">❤ <span id="lives">3</span></div>
         <div class="stat">★ <span id="hearts">0</span>/5</div>
         <div class="stat">⏱ <span id="time">0.0s</span></div>
-        <button id="btn-audio" class="pill small" title="Ljud på/av">🎧 Lofi</button>
+        <button id="btn-audio" class="pill small" title="Ljud på/av">🔇 Lofi</button>
       </div>
       <div class="touch">
         <button class="tbtn" id="btn-left">◀</button>
@@ -120,41 +120,39 @@
   bind(tRight,()=>rightHeld=true,()=>rightHeld=false);
   bind(tJump,()=>jumpHeld=true,()=>jumpHeld=false);
 
-  // Lofi audio (soft)
-  let ac, musicOn=true, seqTimer, hatTimer;
-  function initAudio(){ if(ac) return; ac=new (window.AudioContext||window.webkitAudioContext)(); startMusic(); }
-  function envGain(time, dur, a=0.02, r=0.2, peak=0.2){
-    const g = ac.createGain(); g.gain.setValueAtTime(0,time); g.gain.linearRampToValueAtTime(peak, time+a);
-    g.gain.linearRampToValueAtTime(peak, time+Math.max(0,dur-r)); g.gain.linearRampToValueAtTime(0.0001, time+dur);
+  // Super soft lofi chords (no hats), OFF by default
+  let ac, musicOn=false, seqTimer;
+  function initAudio(){ if(ac) return; ac=new (window.AudioContext||window.webkitAudioContext)(); }
+  function envGain(time, dur, a=0.08, r=0.7, peak=0.035){
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(peak, time+a);
+    g.gain.linearRampToValueAtTime(peak, time+Math.max(0,dur-r));
+    g.gain.linearRampToValueAtTime(0.0001, time+dur);
     return g;
   }
-  function tone(freq=220, dur=0.6){ if(!ac) return;
-    const o = ac.createOscillator(); o.type='sine'; o.frequency.value=freq;
-    const g = envGain(ac.currentTime, dur, 0.04, 0.3, 0.10);
-    const lpf = ac.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=1200;
+  function tone(freq=200, dur=1.4){ if(!ac) return;
+    const o = ac.createOscillator(); o.type='sine'; o.frequency.value=freq*0.95;
+    const g = envGain(ac.currentTime, dur, 0.10, 0.8, 0.028);
+    const lpf = ac.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=650;
     o.connect(g); g.connect(lpf); lpf.connect(ac.destination);
     o.start(); o.stop(ac.currentTime+dur);
   }
-  function hat(dur=0.05){ if(!ac) return;
-    const b = ac.createBuffer(1, ac.sampleRate*dur, ac.sampleRate);
-    const data = b.getChannelData(0);
-    for(let i=0;i<data.length;i++){ data[i] = (Math.random()*2-1) * Math.exp(-i/(data.length*0.6)); }
-    const src = ac.createBufferSource(); src.buffer=b;
-    const hp = ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=7000;
-    const g = ac.createGain(); g.gain.value=0.08;
-    src.connect(hp); hp.connect(g); g.connect(ac.destination);
-    src.start();
-  }
   function startMusic(){
-    if(!ac||!musicOn) return; stopMusic();
-    // soft 80bpm-ish: very gentle triads + hats
-    let i=0; const prog=[[261,329,392],[246,311,392],[220,277,349],[246,311,392]];
-    seqTimer=setInterval(()=>{ const chord = prog[i%prog.length]; chord.forEach(f=>tone(f,0.8)); i++; }, 750);
-    hatTimer=setInterval(()=>{ hat(0.03); }, 375);
+    if(!ac) initAudio(); if(!musicOn) return; stopMusic();
+    // ~60 BPM, mjuka treklanger
+    let i=0; const prog=[[261,311,392],[233,293,370],[220,277,349],[233,293,370]];
+    seqTimer=setInterval(()=>{ const ch=prog[i%prog.length]; ch.forEach(f=>tone(f,1.6)); i++; }, 1000);
   }
-  function stopMusic(){ clearInterval(seqTimer); clearInterval(hatTimer); seqTimer=null; hatTimer=null; }
-  audioBtn.addEventListener('click',()=>{ if(!ac) initAudio(); musicOn=!musicOn; audioBtn.textContent= musicOn?'🎧 Lofi':'🔇 Lofi'; if(musicOn) startMusic(); else stopMusic(); });
-  document.body.addEventListener('keydown',()=>initAudio(),{once:true});
+  function stopMusic(){ clearInterval(seqTimer); seqTimer=null; }
+  audioBtn.textContent='🔇 Lofi';
+  audioBtn.addEventListener('click',()=>{
+    if(!ac) initAudio();
+    musicOn=!musicOn;
+    audioBtn.textContent = musicOn ? '🎧 Lofi' : '🔇 Lofi';
+    musicOn ? startMusic() : stopMusic();
+  });
+  document.body.addEventListener('keydown',()=>{ if(!ac) initAudio(); },{once:true});
 
   // Game state
   const sky='#ffe7f2', block='#ffe1ef', spike='#f6a0c1', heartC='#ff7aa2';
