@@ -176,7 +176,7 @@ if (bgm && soundBtn) {
     ctx.fillStyle='#222'; ctx.fillRect(player.x,player.y,player.w,player.h);
   }
 
-  let last=performance.now(); let won=false;
+  let last=performance.now(); won=false;
   function loop(t){ const dt=t-last; last=t; if(!won) update(dt); draw(); requestAnimationFrame(loop); }
 
   let lives=3;
