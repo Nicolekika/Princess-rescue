@@ -7,10 +7,8 @@
   <style>
   :root { --bg:#fff9fc; --ink:#3a2f35; --line:#f2d9e8; --panel:#ffffffcc; --pill:#f7e7f1; --cta:#f9dff0; --shadow:0 10px 30px rgba(125,89,110,.12); }
   *{box-sizing:border-box}
-  body{margin:0;background:linear-gradient(180deg,var(--bg),#ffeef7);
-       font-family:ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--ink)}
-  .topbar{position:sticky;top:0;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);
-          border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between;z-index:5}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#ffeef7);font-family:ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--ink)}
+  .topbar{position:sticky;top:0;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between;z-index:5}
   .brand{font-weight:800}
   .pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;box-shadow:var(--shadow)}
   .pill.small{padding:6px 10px;font-size:.9rem}
@@ -18,16 +16,14 @@
   .ghost{background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
   .wrap{max-width:1000px;margin:0 auto;padding:16px;position:relative}
   canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);background:#fff0f6}
-  .hud{position:absolute;top:16px;left:16px;display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);
-       border-radius:12px;padding:6px 10px;align-items:center}
+  .hud{position:absolute;top:16px;left:16px;display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;align-items:center}
   .stat{font-weight:700;color:#6b5b64}
   dialog::backdrop{background:rgba(0,0,0,.35)} dialog{border:none;border-radius:16px;padding:0}
   dialog .sheet{background:#fff;padding:16px;min-width:min(520px,92vw);border-radius:16px}
   .rescue .scene{height:160px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#fff,#ffeef7)}
   .rescue .princess{font-weight:800;color:#e06aa6;text-shadow:1px 1px #fff}
   .touch{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 14px;gap:12px;pointer-events:none}
-  .tbtn{pointer-events:auto;border:none;border-radius:16px;background:rgba(255,255,255,.5);backdrop-filter:blur(6px);
-        width:74px;height:74px;font-size:28px;box-shadow:var(--shadow)}
+  .tbtn{pointer-events:auto;border:none;border-radius:16px;background:rgba(255,255,255,.5);backdrop-filter:blur(6px);width:74px;height:74px;font-size:28px;box-shadow:var(--shadow)}
   .tbtn.jump{width:86px;height:86px}
   @media(min-width:900px){.touch{display:none}}
   </style>
@@ -108,15 +104,14 @@
   const dlgShop = document.getElementById('shop');
   const dlgRescue = document.getElementById('rescue');
 
-  // -------- Audio via MP3 (endast på klick – Safari-säkert) ----------
+  // --- Audio via MP3 (endast på klick – Safari-säkert) ---
   const audioBtn = document.getElementById('btn-audio');
   const bgm = document.getElementById('bgm');
   let musicOn = false;
   if (bgm && audioBtn) {
-    bgm.volume = 0.15;  // mjukt
+    bgm.volume = 0.15;
     bgm.muted  = false;
     audioBtn.textContent = '🔇 Lofi';
-
     audioBtn.addEventListener('click', () => {
       if (!musicOn) {
         bgm.play().then(() => {
@@ -133,9 +128,9 @@
       }
     });
   }
-  // ------------------------------------------------------------------
+  // --------------------------------------------------------
 
-  // Touch + tangent
+  // Input (tangent + touch)
   const tLeft = document.getElementById('btn-left');
   const tRight = document.getElementById('btn-right');
   const tJump = document.getElementById('btn-jump');
@@ -156,8 +151,8 @@
   if(localStorage.getItem('age_ok')!=='yes'){ setTimeout(()=>dlgAge.showModal(),30); }
   enter?.addEventListener('click',(e)=>{ if(!confirm18.checked){ e.preventDefault(); alert('Bekräfta 18+.'); } else localStorage.setItem('age_ok','yes'); });
 
-  // ---- Spel ----
-  const sky='#ffe7f2', block='#ffe1ef', spike='#f6a0c1', heartC='#ff7aa2';
+  // Spel
+  const sky='#ffe7f2', block='#ffe1ef', spike='#f6a0c1';
   let player, princess, platforms, movers, spikes, blobs, hearts, t0, got, lives, won;
   const GRAV=0.5,JUMP=10.2,SPEED=2.4,MAX_VY=16;
 
@@ -174,7 +169,7 @@
   }
   function overlap(a,b){return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;}
   function triHit(px,py,ax,ay,bx,by,cx,cy){const v0x=cx-ax,v0y=cy-ay,v1x=bx-ax,v1y=by-ay,v2x=px-ax,v2y=py-ay;
-    const d00=v0x*v0x+v0y*v0y,d01=v0x*v1x+v0y*v1y,d02=v0x*v2x+v0y*v2y,d11=v1x*v1x+v1y*v1y,d12=v1x*v2x+v1y*v2y;
+    const d00=v0x*v0x+v0y*v0y,d01=v0x*v1x+v0y*v1y,d02=v0x*v2x+v0y*v2y,d11=v1x*v1x+v1y*v1y,d12=v1x*v2x+v1y*v1y;
     const inv=1/(d00*d11-d01*d01);const u=(d11*d02-d01*d12)*inv,v=(d00*d12-d01*d02)*inv;return(u>=0)&&(v>=0)&&((u+v)<1);}
 
   function update(dt){
