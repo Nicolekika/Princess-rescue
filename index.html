@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Princess Rescue — Full (18+, Super Soft Lofi)</title>
+  <title>Princess Rescue — Full (18+, Lofi MP3)</title>
   <style>
   :root { --bg:#fff9fc; --ink:#3a2f35; --line:#f2d9e8; --panel:#ffffffcc; --pill:#f7e7f1; --cta:#f9dff0; --shadow:0 10px 30px rgba(125,89,110,.12); }
   *{box-sizing:border-box}
@@ -55,6 +55,9 @@
     </div>
   </main>
 
+  <!-- Lofi bakgrundsmusik (MP3) -->
+  <audio id="bgm" src="lofi.mp3" preload="auto" loop></audio>
+
   <dialog id="ageGate">
     <form method="dialog" class="sheet">
       <h2>Bekräfta ålder</h2>
@@ -101,18 +104,32 @@
   const dlgHow = document.getElementById('how');
   const dlgShop = document.getElementById('shop');
   const dlgRescue = document.getElementById('rescue');
+
+  // Audio via MP3
   const audioBtn = document.getElementById('btn-audio');
+  const bgm = document.getElementById('bgm');
+  let musicOn = false;
+  if (bgm) {
+    bgm.volume = 0.15; // låg volym
+    audioBtn.textContent = '🔇 Lofi';
+    audioBtn.addEventListener('click', async () => {
+      try {
+        if (!musicOn) { await bgm.play(); musicOn = true; audioBtn.textContent = '🎧 Lofi'; }
+        else { bgm.pause(); musicOn = false; audioBtn.textContent = '🔇 Lofi'; }
+      } catch (e) { console.warn('Audio play blocked tills användarinteraktion.', e); }
+    });
+    document.body.addEventListener('keydown', async () => {
+      if (!musicOn) { try { await bgm.play(); musicOn = true; audioBtn.textContent = '🎧 Lofi'; } catch(_){} }
+    }, { once:true });
+  }
+
+  // Input
   const tLeft = document.getElementById('btn-left');
   const tRight = document.getElementById('btn-right');
   const tJump = document.getElementById('btn-jump');
   const confirm18 = document.getElementById('confirm18');
   const enter = document.getElementById('enter');
 
-  // Age gate
-  if(localStorage.getItem('age_ok')!=='yes'){ setTimeout(()=>dlgAge.showModal(),30); }
-  enter?.addEventListener('click',(e)=>{ if(!confirm18.checked){ e.preventDefault(); alert('Bekräfta 18+.'); } else localStorage.setItem('age_ok','yes'); });
-
-  // Input
   const keys={}; addEventListener('keydown',e=>keys[e.key]=true); addEventListener('keyup',e=>keys[e.key]=false);
   let leftHeld=false,rightHeld=false,jumpHeld=false;
   function bind(btn,down,up){ if(!btn) return; const d=(e)=>{e.preventDefault();down();}; const u=(e)=>{e.preventDefault();up();}; btn.addEventListener('touchstart',d);btn.addEventListener('mousedown',d);btn.addEventListener('touchend',u);btn.addEventListener('mouseup',u);btn.addEventListener('mouseleave',u);}
@@ -120,39 +137,9 @@
   bind(tRight,()=>rightHeld=true,()=>rightHeld=false);
   bind(tJump,()=>jumpHeld=true,()=>jumpHeld=false);
 
-  // Super soft lofi chords (no hats), OFF by default
-  let ac, musicOn=false, seqTimer;
-  function initAudio(){ if(ac) return; ac=new (window.AudioContext||window.webkitAudioContext)(); }
-  function envGain(time, dur, a=0.08, r=0.7, peak=0.035){
-    const g = ac.createGain();
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(peak, time+a);
-    g.gain.linearRampToValueAtTime(peak, time+Math.max(0,dur-r));
-    g.gain.linearRampToValueAtTime(0.0001, time+dur);
-    return g;
-  }
-  function tone(freq=200, dur=1.4){ if(!ac) return;
-    const o = ac.createOscillator(); o.type='sine'; o.frequency.value=freq*0.95;
-    const g = envGain(ac.currentTime, dur, 0.10, 0.8, 0.028);
-    const lpf = ac.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=650;
-    o.connect(g); g.connect(lpf); lpf.connect(ac.destination);
-    o.start(); o.stop(ac.currentTime+dur);
-  }
-  function startMusic(){
-    if(!ac) initAudio(); if(!musicOn) return; stopMusic();
-    // ~60 BPM, mjuka treklanger
-    let i=0; const prog=[[261,311,392],[233,293,370],[220,277,349],[233,293,370]];
-    seqTimer=setInterval(()=>{ const ch=prog[i%prog.length]; ch.forEach(f=>tone(f,1.6)); i++; }, 1000);
-  }
-  function stopMusic(){ clearInterval(seqTimer); seqTimer=null; }
-  audioBtn.textContent='🔇 Lofi';
-  audioBtn.addEventListener('click',()=>{
-    if(!ac) initAudio();
-    musicOn=!musicOn;
-    audioBtn.textContent = musicOn ? '🎧 Lofi' : '🔇 Lofi';
-    musicOn ? startMusic() : stopMusic();
-  });
-  document.body.addEventListener('keydown',()=>{ if(!ac) initAudio(); },{once:true});
+  // Age gate
+  if(localStorage.getItem('age_ok')!=='yes'){ setTimeout(()=>dlgAge.showModal(),30); }
+  enter?.addEventListener('click',(e)=>{ if(!confirm18.checked){ e.preventDefault(); alert('Bekräfta 18+.'); } else localStorage.setItem('age_ok','yes'); });
 
   // Game state
   const sky='#ffe7f2', block='#ffe1ef', spike='#f6a0c1', heartC='#ff7aa2';
@@ -189,7 +176,7 @@
     for(const s of spikes){const[sx,sy,size]=s;const px=player.x+player.w/2,py=player.y+player.h-2; if(triHit(px,py,sx,sy,sx+size,sy,sx+size/2,sy-size)){die();break;}}
     for(const b of blobs){b.x+=b.vx; if(b.x<b.minX||b.x+b.w>b.maxX) b.vx*=-1; if(overlap(player,b)){die();break;}}
     for(const h of hearts){if(!h.t){const dx=(player.x+player.w/2)-h.x,dy=(player.y+player.h/2)-h.y; if(Math.hypot(dx,dy)<20){h.t=true;got++;heartsEl.textContent=got; }}}
-    const r={x:princess.x,y:princess.y,w:princess.w,h:princess.h}; if(got>=5 && overlap(player,r)){ dlgRescue.showModal(); won=true; stopMusic(); }
+    const r={x:princess.x,y:princess.y,w:princess.w,h:princess.h}; if(got>=5 && overlap(player,r)){ dlgRescue.showModal(); won=true; if(musicOn) bgm.pause(); }
     const t=(performance.now()-t0)/1000; timeEl.textContent=t.toFixed(1)+'s';
   }
   function die(){ livesEl.textContent=--lives; if(lives<=0) reset(); else {player.x=60;player.y=420;player.vx=0;player.vy=0;} }
