@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Princess Rescue — Full (18+, Lofi)</title>
   <style>
-    :root { --bg:#fff9fc; --ink:#3a2f35; --line:#f2d9e8; --panel:#ffffffcc; --pill:#f7e7f1; --cta:#f9dff0; --shadow:0 10px 30px rgba(125,89,110,.12); }
+    :root{--bg:#fff9fc;--ink:#3a2f35;--line:#f2d9e8;--panel:#ffffffcc;--pill:#f7e7f1;--cta:#f9dff0;--shadow:0 10px 30px rgba(125,89,110,.12)}
     *{box-sizing:border-box}
     body{margin:0;background:linear-gradient(180deg,var(--bg),#ffeef7);font-family:ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--ink)}
     .topbar{position:sticky;top:0;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between;z-index:5}
@@ -13,7 +13,6 @@
     .pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;box-shadow:var(--shadow)}
     .pill.small{padding:6px 10px;font-size:.9rem}
     .cta{background:var(--cta);border:none;border-radius:12px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-weight:700}
-    .ghost{background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
     .wrap{max-width:1000px;margin:0 auto;padding:16px;position:relative}
     canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);background:#fff0f6}
     .hud{position:absolute;top:16px;left:16px;display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;align-items:center}
@@ -45,13 +44,13 @@
       </div>
     </div>
 
-    <!-- Ljudkontroll under spelet -->
+    <!-- Ljudkontroll NEDANFÖR spelet -->
     <div class="audio-bar">
       <button id="btn-audio" class="pill small" title="Ljud på/av">🔇 Lofi</button>
       <span class="tiny">Klicka för att starta/pausa musiken</span>
     </div>
 
-    <!-- MP3 (måste ligga bredvid index.html) -->
+    <!-- MP3-filen måste heta exakt lofi.mp3 och ligga i samma mapp -->
     <audio id="bgm" src="lofi.mp3" preload="auto" loop playsinline></audio>
   </main>
 
@@ -65,108 +64,156 @@
   <dialog id="shop"><form method="dialog" class="sheet">
     <h3>Butik (demo)</h3>
     <p>Koppla betalning i produktion.</p>
-    <menu><button class="ghost">Stäng</button></menu>
+    <menu><button class="cta">Stäng</button></menu>
   </form></dialog>
 
   <dialog id="rescue"><form method="dialog" class="sheet rescue">
     <div class="scene"><div class="princess">Thank you, hero!</div></div>
     <p>Du räddade prinsessan 💖</p>
-    <menu><button class="ghost" id="btn-replay">Spela igen</button></menu>
+    <menu><button class="cta" id="btn-replay">Spela igen</button></menu>
   </form></dialog>
 
 <script>
 (() => {
-  // Canvas + UI
+  // --- DOM ---
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
+
   const livesEl  = document.getElementById('lives');
   const heartsEl = document.getElementById('hearts');
   const timeEl   = document.getElementById('time');
+
   const dlgHow   = document.getElementById('how');
   const dlgShop  = document.getElementById('shop');
   const dlgRescue= document.getElementById('rescue');
-
-  // Ljud
-  const bgm = document.getElementById('bgm');
-  const soundBtn = document.getElementById('btn-audio'); // <- rätt id
-  let musicOn = false;
-  if (bgm && soundBtn) {
-    bgm.volume = 0.15;
-    soundBtn.textContent = '🔇 Lofi';
-    async function toggleAudio() {
-      try {
-        if (!musicOn) { await bgm.play(); musicOn = true; soundBtn.textContent = '🎧 Lofi'; }
-        else { bgm.pause(); musicOn = false; soundBtn.textContent = '🔇 Lofi'; }
-      } catch (e) {
-        alert('Om det är tyst: höj volym, slå av tyst läge och klicka igen.');
-      }
-    }
-    soundBtn.addEventListener('click', toggleAudio);
-    // Tillåt start efter första tangenttryck (Safari)
-    document.body.addEventListener('keydown', async () => {
-      if (!musicOn) { try { await bgm.play(); musicOn = true; soundBtn.textContent='🎧 Lofi'; } catch {} }
-    }, { once:true });
-  }
-
-  // Dialogknappar
-  document.getElementById('btn-how') .addEventListener('click',()=>dlgHow.showModal());
+  document.getElementById('btn-how').addEventListener('click',()=>dlgHow.showModal());
   document.getElementById('btn-shop').addEventListener('click',()=>dlgShop.showModal());
-  document.getElementById('btn-replay')?.addEventListener('click',()=>{ dlgRescue.close(); reset(); });
+  document.getElementById('btn-replay').addEventListener('click',()=>{ dlgRescue.close(); reset(); });
 
-  // Input
-  const keys={}; addEventListener('keydown',e=>keys[e.key]=true); addEventListener('keyup',e=>keys[e.key]=false);
+  // --- Ljud (MP3) ---
+  const soundBtn = document.getElementById('btn-audio');
+  const bgm = document.getElementById('bgm');
+  let musicOn = false;
+  bgm.volume = 0.15;
+  soundBtn.textContent = '🔇 Lofi';
+  async function toggleAudio(){
+    try{
+      if(!musicOn){ await bgm.play(); musicOn = true;  soundBtn.textContent = '🎧 Lofi'; }
+      else        { bgm.pause();     musicOn = false; soundBtn.textContent = '🔇 Lofi'; }
+    }catch(e){ alert('Om det är tyst: höj volym, slå av tyst läge och klicka igen.'); }
+  }
+  soundBtn.addEventListener('click', toggleAudio);
+  document.body.addEventListener('keydown', async () => {
+    if (!musicOn) { try { await bgm.play(); musicOn = true; soundBtn.textContent = '🎧 Lofi'; } catch{} }
+  }, { once:true });
 
-  // Spel-tillstånd
+  // --- Input ---
+  const keys = {};
+  addEventListener('keydown', e=>keys[e.key]=true);
+  addEventListener('keyup',   e=>keys[e.key]=false);
+
+  // --- Speldata ---
   const sky='#ffe7f2', block='#ffe1ef', spike='#f6a0c1', heartC='#ff7aa2';
-  let player, princess, platforms, movers, spikes, blobs, hearts, t0, got, lives, won;
-  const GRAV=0.5,JUMP=10.2,SPEED=2.4,MAX_VY=16;
+  const GRAV=0.5, JUMP=10.2, SPEED=2.4, MAX_VY=16;
+
+  let player, princess, platforms, movers, spikes, blobs, hearts;
+  let t0, got, lives, won;
+
+  function initActors(){
+    // fiender & hjärtan startvärden
+    blobs  = [
+      {x:330,y:364,w:26,h:18,vx:1,  minX:320,maxX:440},
+      {x:740,y:244,w:26,h:18,vx:-1, minX:720,maxX:840}
+    ];
+    hearts = [
+      {x:185,y:400,t:false},{x:350,y:340,t:false},{x:550,y:280,t:false},{x:750,y:220,t:false},{x:880,y:150,t:false}
+    ];
+  }
 
   function reset(){
-    player={x:60,y:420,w:28,h:36,vx:0,vy:0,on:false,dir:1};
-    princess={x:840,y:140,w:28,h:44};
-    platforms=[[0,500,960,40],[160,440,120,16],[320,380,120,16],[520,320,120,16],[720,260,120,16],[780,180,140,16]];
-    movers=[{x:240,y:480,w:100,h:16,dx:0,dy:-1.2,range:60,t:0},{x:610,y:360,w:90,h:16,dx:1.4,dy:0,range:80,t:0}];
-    spikes=[[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]];
-    // blobs & hearts fylls i initActors()
+    player   = {x:60,y:420,w:28,h:36,vx:0,vy:0,on:false,dir:1};
+    princess = {x:840,y:140,w:28,h:44};
+
+    platforms = [
+      [0,500,960,40],[160,440,120,16],[320,380,120,16],
+      [520,320,120,16],[720,260,120,16],[780,180,140,16]
+    ];
+    movers = [
+      {x:240,y:480,w:100,h:16,dx:0,  dy:-1.2,range:60,t:0},
+      {x:610,y:360,w:90, h:16,dx:1.4,dy:0,   range:80,t:0}
+    ];
+    spikes = [
+      [220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],
+      [400,364,28],[580,308,28]
+    ];
+
     got=0; lives=3; won=false; t0=performance.now();
-    livesEl.textContent=lives; heartsEl.textContent=got;
+    livesEl.textContent = lives;
+    heartsEl.textContent = got;
   }
+
+  // --- Hjälpfunktioner ---
   function overlap(a,b){return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;}
-  function triHit(px,py,ax,ay,bx,by,cx,cy){const v0x=cx-ax,v0y=cy-ay,v1x=bx-ax,v1y=by-ay,v2x=px-ax,v2y=py-ay;const d00=v0x*v0x+v0y*v0y,d01=v0x*v1x+v0y*v1y,d02=v0x*v2x+v0y*v2y,d11=v1x*v1x+v1y*v1y,d12=v1x*v2x+v1y*v2y;const inv=1/(d00*d11-d01*d01);const u=(d11*d02-d01*d12)*inv,v=(d00*d12-d01*d02)*inv;return(u>=0)&&(v>=0)&&((u+v)<1);}
+  function triHit(px,py,ax,ay,bx,by,cx,cy){
+    const v0x=cx-ax,v0y=cy-ay,v1x=bx-ax,v1y=by-ay,v2x=px-ax,v2y=py-ay;
+    const d00=v0x*v0x+v0y*v0y,d01=v0x*v1x+v0y*v1y,d02=v0x*v2x+v0y*v2y,d11=v1x*v1x+v1y*v1y,d12=v1x*v2x+v1y*v2y;
+    const inv=1/(d00*d11-d01*d01); const u=(d11*d02-d01*d12)*inv, v=(d00*d12-d01*d02)*inv; return (u>=0)&&(v>=0)&&((u+v)<1);
+  }
 
+  // --- Update/Draw/Loop ---
   function update(dt){
-    const left=keys['ArrowLeft']||keys['a']||keys['A'];
-    const right=keys['ArrowRight']||keys['d']||keys['D'];
-    const jump=keys['ArrowUp']||keys['w']||keys['W']||keys[' '];
+    const left = keys['ArrowLeft']||keys['a']||keys['A'];
+    const right= keys['ArrowRight']||keys['d']||keys['D'];
+    const jump = keys['ArrowUp']||keys['w']||keys['W']||keys[' '];
 
-    player.vx=0; if(left) player.vx=-SPEED,player.dir=-1; if(right) player.vx=SPEED,player.dir=1;
+    // horisontell
+    player.vx = 0; if(left) player.vx=-SPEED,player.dir=-1; if(right) player.vx=SPEED,player.dir=1;
+
+    // gravitation
     player.vy+=GRAV; if(player.vy>MAX_VY) player.vy=MAX_VY;
 
+    // kollision X
     player.x+=player.vx;
     for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(overlap(player,r)){ if(player.vx>0) player.x=r.x-player.w; else if(player.vx<0) player.x=r.x+r.w; }}
 
+    // kollision Y
     player.y+=player.vy; player.on=false;
     for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(overlap(player,r)){ if(player.vy>0){player.y=r.y-player.h;player.vy=0;player.on=true;} else if(player.vy<0){player.y=r.y+r.h;player.vy=0;} }}
 
-    for(const m of movers){m.t+=dt;const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy;const r={x:m.x+ox,y:m.y+oy,w:m.w,h:m.h}; if(overlap(player,r)&&player.vy>=0){player.y=r.y-player.h;player.vy=0;player.on=true;player.x+=(m.dx!==0?Math.cos(m.t*0.001)*m.range*0.03*m.dx:0);}}
+    // rörliga plattformar
+    for(const m of movers){
+      m.t+=dt;
+      const ox=Math.sin(m.t*0.001)*m.range*m.dx, oy=Math.sin(m.t*0.001)*m.range*m.dy;
+      const r={x:m.x+ox,y:m.y+oy,w:m.w,h:m.h};
+      if(overlap(player,r)&&player.vy>=0){player.y=r.y-player.h;player.vy=0;player.on=true;player.x+=(m.dx!==0?Math.cos(m.t*0.001)*m.range*0.03*m.dx:0);}
+    }
 
-    if(jump && player.on){player.vy=-JUMP; player.on=false;}
+    // hopp
+    if(jump && player.on){ player.vy=-JUMP; player.on=false; }
 
-    for(const s of spikes){const[sx,sy,size]=s;const px=player.x+player.w/2,py=player.y+player.h-2; if(triHit(px,py,sx,sy,sx+size,sy,sx+size/2,sy-size)){die();break;}}
-    for(const b of blobs){b.x+=b.vx; if(b.x<b.minX||b.x+b.w>b.maxX) b.vx*=-1; if(overlap(player,b)){die();break;}}
-    for(const h of hearts){if(!h.t){const dx=(player.x+player.w/2)-h.x,dy=(player.y+player.h/2)-h.y; if(Math.hypot(dx,dy)<20){h.t=true;got++;heartsEl.textContent=got; }}}
-    const r={x:princess.x,y:princess.y,w:princess.w,h:princess.h}; if(got>=5 && overlap(player,r)){ dlgRescue.showModal(); won=true; if(musicOn) bgm.pause(); }
+    // spikar / blobs
+    for(const s of spikes){const[sx,sy,size]=s;const px=player.x+player.w/2,py=player.y+player.h-2; if(triHit(px,py,sx,sy,sx+size,sy,sx+size/2,sy-size)) { die(); break; }}
+    for(const b of blobs){ b.x+=b.vx; if(b.x<b.minX||b.x+b.w>b.maxX) b.vx*=-1; if(overlap(player,b)){ die(); break; } }
+
+    // hjärtan
+    for(const h of hearts){ if(!h.t){ const dx=(player.x+player.w/2)-h.x, dy=(player.y+player.h/2)-h.y; if(Math.hypot(dx,dy)<20){ h.t=true; got++; heartsEl.textContent=got; } } }
+
+    // mål
+    const goal={x:princess.x,y:princess.y,w:princess.w,h:princess.h};
+    if(got>=5 && overlap(player,goal)){ dlgRescue.showModal(); won=true; if(musicOn) bgm.pause(); }
+
+    // tid
     const t=(performance.now()-t0)/1000; timeEl.textContent=t.toFixed(1)+'s';
   }
 
-  function die(){ livesEl.textContent=--lives; if(lives<=0) reset(); else {player.x=60;player.y=420;player.vx=0;player.vy=0;} }
+  function die(){ livesEl.textContent = --lives; if(lives<=0) reset(); else { player.x=60; player.y=420; player.vx=0; player.vy=0; } }
 
   function draw(){
     ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#fff';
-    for(let i=0;i<6;i++){ const x=(i*180)%W, y=60+((i%2)*30); ctx.globalAlpha=0.25; ctx.beginPath(); ctx.arc(x,y,40,0,Math.PI*2); ctx.arc(x+40,y+10,28,0,Math.PI*2); ctx.arc(x+80,y,36,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
-    ctx.fillStyle='#d7f0ff'; ctx.fillRect(0, 440, W, 100);
+    // lite fluffmoln
+    ctx.fillStyle='#fff'; for(let i=0;i<6;i++){const x=(i*180)%W,y=60+((i%2)*30);ctx.globalAlpha=.25;ctx.beginPath();ctx.arc(x,y,40,0,Math.PI*2);ctx.arc(x+40,y+10,28,0,Math.PI*2);ctx.arc(x+80,y,36,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+    ctx.fillStyle='#d7f0ff'; ctx.fillRect(0,440,W,100);
     ctx.fillStyle=block; for(const p of platforms) ctx.fillRect(p[0],p[1],p[2],p[3]);
     for(const m of movers){const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy; ctx.fillStyle='#ffd6ec'; ctx.fillRect(m.x+ox,m.y+oy,m.w,m.h);}
     ctx.fillStyle=spike; for(const s of spikes){const[x,y,size]=s; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+size,y); ctx.lineTo(x+size/2,y-size); ctx.closePath(); ctx.fill();}
@@ -176,27 +223,14 @@
     ctx.fillStyle='#222'; ctx.fillRect(player.x,player.y,player.w,player.h);
   }
 
-  // Loop
+  // Loopen startas allra sist – efter att allt är initierat
   let last = performance.now();
   let won  = false;
-  function loop(t){
-    const dt=t-last; last=t;
-    if(!won) update(dt);
-    draw();
-    requestAnimationFrame(loop);
-  }
+  function loop(t){ const dt=t-last; last=t; if(!won) update(dt); draw(); requestAnimationFrame(loop); }
 
-  // Skapa fiender & hjärtan
-  let blobs=[], hearts=[];
-  function initActors(){
-    blobs=[{x:330,y:364,w:26,h:18,vx:1,minX:320,maxX:440},{x:740,y:244,w:26,h:18,vx:-1,minX:720,maxX:840}];
-    hearts=[{x:185,y:400,t:false},{x:350,y:340,t:false},{x:550,y:280,t:false},{x:750,y:220,t:false},{x:880,y:150,t:false}];
-  }
-
-  // Kör i rätt ordning
+  // Kör!
   initActors();
   reset();
-  last = performance.now();
   requestAnimationFrame(loop);
 })();
 </script>
