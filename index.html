@@ -1,29 +1,23 @@
 <!doctype html>
 <html lang="sv">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Princess Rescue — Single File (18+)</title>
-<style>
-:root { --bg:#fff9fc; --ink:#3a2f35; --line:#f2d9e8; --panel:#ffffffcc; --pill:#f7e7f1; --cta:#f9dff0; --shadow:0 10px 30px rgba(125,89,110,.12); }
-*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,var(--bg),#ffeef7);font-family:ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.topbar{position:sticky;top:0;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between}
-.brand{font-weight:800} .pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;box-shadow:var(--shadow)}
-.pill.small{padding:6px 10px;font-size:.9rem}
-.cta{background:var(--cta);border:none;border-radius:12px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-weight:700}
-.ghost{background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
-.wrap{max-width:1000px;margin:0 auto;padding:16px;position:relative}
-canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);background:#fefcff}
-.hud{position:absolute;top:26px;left:26px;display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;align-items:center}
-.stat{font-weight:700;color:#6b5b64}
-dialog::backdrop{background:rgba(0,0,0,.35)} dialog{border:none;border-radius:16px;padding:0}
-dialog .sheet{background:#fff;padding:16px;min-width:min(520px,92vw);border-radius:16px}
-.rescue .scene{height:180px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#fff,#ffeef7)}
-.rescue .princess{font-weight:800;color:#e06aa6;text-shadow:1px 1px #fff}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Princess Rescue — Single File (18+)</title>
+  <style>
+    :root{--bg:#fff9fc;--ink:#3a2f35;--line:#f2d9e8;--panel:#ffffffcc;--pill:#f7e7f1;--cta:#f9dff0;--sh:0 10px 30px rgba(125,89,110,.12)}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,var(--bg),#ffeef7);font-family:ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--ink)}
+    header{position:sticky;top:0;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between;z-index:5}
+    .pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:8px 12px;box-shadow:var(--sh);cursor:pointer}
+    .wrap{max-width:1000px;margin:0 auto;padding:16px}
+    .hud{position:absolute;top:16px;left:16px;display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+    canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);background:#fff0f6}
+    dialog::backdrop{background:rgba(0,0,0,.35)} dialog{border:none;border-radius:16px;padding:0}
+    dialog .sheet{background:#fff;padding:16px;min-width:min(520px,92vw);border-radius:16px}
+  </style>
 </head>
 <body>
-  <header class="topbar">
+  <header>
     <div class="brand">♡ Princess Rescue</div>
     <nav>
       <button id="btn-how" class="pill">Hur spelar man?</button>
@@ -32,112 +26,113 @@ dialog .sheet{background:#fff;padding:16px;min-width:min(520px,92vw);border-radi
   </header>
 
   <main class="wrap">
-    <canvas id="game" width="960" height="540"></canvas>
-    <div class="hud">
-      <div class="stat">❤ <span id="lives">3</span></div>
-      <div class="stat">★ <span id="hearts">0</span>/5</div>
-      <div class="stat">⏱ <span id="time">0.0s</span></div>
-      <button id="btn-audio" class="pill small">🔊</button>
+    <div style="position:relative">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div class="hud">
+        <div>❤ <span id="lives">3</span></div>
+        <div>★ <span id="hearts">0</span>/5</div>
+        <div>⏱ <span id="time">0.0s</span></div>
+        <button id="btn-audio" class="pill" title="Ljud på/av">🔊</button>
+      </div>
     </div>
   </main>
 
-  <dialog id="ageGate"><form method="dialog" class="sheet">
+  <!-- Åldersgrind -->
+  <dialog id="age"><form method="dialog" class="sheet">
     <h2>Bekräfta ålder</h2>
-    <p>Detta är ett vuxet utrymme men spelet i sig är icke-explicit. Du måste vara 18+ för att gå vidare.</p>
-    <label class="check"><input type="checkbox" id="confirm18" required> Jag är 18 år eller äldre</label>
-    <menu><button class="ghost" value="cancel">Avbryt</button><button class="cta" value="ok" id="enter">Fortsätt</button></menu>
+    <p>Detta är ett vuxet utrymme (icke-explicit spel). Du måste vara 18+.</p>
+    <label><input id="ok18" type="checkbox" required> Jag är 18+</label>
+    <menu><button value="cancel">Avbryt</button><button id="go" value="ok">Fortsätt</button></menu>
   </form></dialog>
 
+  <!-- Hjälp -->
   <dialog id="how"><form method="dialog" class="sheet">
     <h3>Hur spelar man</h3>
-    <ul><li>A/D eller ←/→ = gå</li><li>W/↑/Space = hoppa</li><li>Undvik spikar och blobbar</li><li>Samla 5 hjärtan och nå prinsessan</li></ul>
-    <menu><button class="cta" id="startGame">Starta</button></menu>
+    <ul><li>A/D eller ←/→ = gå</li><li>W/↑/Space = hoppa</li><li>Undvik spikar</li></ul>
+    <menu><button>OK</button></menu>
   </form></dialog>
 
-  <dialog id="shop"><form method="dialog" class="sheet">
-    <h3>Butik (demo)</h3>
-    <p>Detta är en demo. Anslut betalning i produktion.</p>
-    <button class="pill" id="btn-membership">Köp medlemskap</button>
-    <menu><button class="ghost">Stäng</button></menu>
-  </form></dialog>
+  <script>
+  (() => {
+    // ===== basic selectors =====
+    const cvs = document.getElementById('game');
+    const ctx = cvs.getContext('2d');
+    const livesEl = document.getElementById('lives');
+    const heartsEl = document.getElementById('hearts');
+    const timeEl  = document.getElementById('time');
+    const dlgAge  = document.getElementById('age');
+    const ok18    = document.getElementById('ok18');
+    const goBtn   = document.getElementById('go');
+    const btnHow  = document.getElementById('btn-how');
 
-  <dialog id="rescue"><form method="dialog" class="sheet rescue">
-    <div class="scene"><div class="princess">Thank you, hero!</div></div>
-    <p>Du räddade prinsessan 💖</p>
-    <menu><button class="ghost" id="btn-replay">Spela igen</button><button class="cta" id="btn-upgrade">Lås upp bonus (demo)</button></menu>
-  </form></dialog>
+    // ===== age gate =====
+    if (localStorage.getItem('age_ok')!=='yes') {
+      setTimeout(()=>dlgAge.showModal(), 10);
+    }
+    goBtn?.addEventListener('click', e => {
+      if (!ok18.checked) { e.preventDefault(); alert('Bekräfta 18+.'); }
+      else localStorage.setItem('age_ok','yes');
+    });
+    btnHow?.addEventListener('click', ()=> document.getElementById('how').showModal());
 
-<script>
-(() => {
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+    // ===== minimal game loop to verify draw =====
+    let t0 = performance.now();
+    let x = 40, y = 60, vx = 1.8, vy = 1.2; // rörlig prick så vi SER att loopen kör
+    let won = false;
 
-  const livesEl = document.getElementById('lives');
-  const heartsEl = document.getElementById('hearts');
-  const timeEl = document.getElementById('time');
-  const dlgAge = document.getElementById('ageGate');
-  const dlgHow = document.getElementById('how');
-  const dlgShop = document.getElementById('shop');
-  const dlgRescue = document.getElementById('rescue');
-  const btnHow = document.getElementById('btn-how');
-  const btnShop = document.getElementById('btn-shop');
-  const btnMembership = document.getElementById('btn-membership');
-  const btnReplay = document.getElementById('btn-replay');
-  const btnUpgrade = document.getElementById('btn-upgrade');
-  const confirm18 = document.getElementById('confirm18');
-  const enter = document.getElementById('enter');
-  const startBtn = document.getElementById('startGame');
-  const audioBtn = document.getElementById('btn-audio');
+    function draw(ts){
+      // bakgrund
+      ctx.fillStyle = '#ffe7f2';
+      ctx.fillRect(0,0,cvs.width,cvs.height);
 
-  // Audio (procedural, no files)
-  let ac, musicOn = true, musicTimer;
-  function initAudio(){ if(ac) return; ac = new (window.AudioContext||window.webkitAudioContext)(); startMusic(); }
-  function beep(freq=440,dur=0.12,type='square',gain=0.25){ if(!ac) return; const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(ac.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur); o.stop(ac.currentTime+dur+0.02); }
-  function chord(freqs,d=0.25){ freqs.forEach(f=>beep(f,d,'triangle',0.2)); }
-  function startMusic(){ if(!ac||!musicOn) return; stopMusic(); const seq=[262,330,392,523,392,330,294,330]; let i=0; musicTimer=setInterval(()=>{beep(seq[i%seq.length],0.15,'triangle',0.14); i++;},320); }
-  function stopMusic(){ if(musicTimer) clearInterval(musicTimer); musicTimer=null; }
-  audioBtn.addEventListener('click',()=>{ initAudio(); musicOn=!musicOn; audioBtn.textContent=musicOn?'🔊':'🔈'; if(musicOn) startMusic(); else stopMusic(); });
+      // moln
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#fff';
+      for (let i=0;i<6;i++){
+        const cx = (i*180 + (ts/20)%180) % cvs.width;
+        const cy = 60 + ((i%2)*30);
+        ctx.beginPath(); ctx.arc(cx,cy,40,0,Math.PI*2);
+        ctx.arc(cx+40,cy+10,28,0,Math.PI*2);
+        ctx.arc(cx+80,cy,36,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
 
-  // Age gate & dialogs
-  function ensureAge(){ const ok=localStorage.getItem('age_ok')==='yes'; if(!ok) setTimeout(()=>dlgAge.showModal(),10); }
-  ensureAge();
-  enter?.addEventListener('click',(e)=>{ if(!confirm18.checked){ e.preventDefault(); alert('Du måste bekräfta 18+.'); } else localStorage.setItem('age_ok','yes'); });
-  btnHow.addEventListener('click',()=>dlgHow.showModal());
-  btnShop.addEventListener('click',()=>dlgShop.showModal());
-  startBtn?.addEventListener('click',()=>{ initAudio(); });
-  document.body.addEventListener('keydown',()=>initAudio(),{once:true});
-  btnMembership?.addEventListener('click',(e)=>{ e.preventDefault(); alert('Demo: koppla betalning i produktion.'); });
-  btnReplay?.addEventListener('click',()=>{ dlgRescue.close(); reset(); });
-  btnUpgrade?.addEventListener('click',()=>{ dlgRescue.close(); dlgShop.showModal(); });
+      // rörlig prick (debug)
+      ctx.fillStyle = '#ff4aa8';
+      ctx.fillRect(x, y, 18, 18);
 
-  // Input
-  const keys={}; addEventListener('keydown',e=>keys[e.key]=true); addEventListener('keyup',e=>keys[e.key]=false);
+      // HUD-tid
+      timeEl.textContent = ((ts - t0)/1000).toFixed(1) + 's';
+    }
 
-  // Game state
-  const sky='#ffeef7', ground='#d7f0ff', block='#ffe1ef', spike='#f6a0c1', blobC='#c6a3ff', heartC='#ff7aa2';
-  let player, princess, platforms, movers, spikesArr, blobs, hearts, startTime, collectCount, lives, won;
+    function update(){
+      // studs i kanterna
+      x += vx; y += vy;
+      if (x<0 || x>cvs.width-18) vx *= -1;
+      if (y<0 || y>cvs.height-18) vy *= -1;
+    }
 
-  function reset(){
-    player={x:60,y:420,w:28,h:36,vx:0,vy:0,onGround:false,dir:1};
-    princess={x:840,y:140,w:28,h:44};
-    platforms=[[0,500,960,40],[160,440,120,16],[320,380,120,16],[520,320,120,16],[720,260,120,16],[780,180,140,16]];
-    movers=[{x:240,y:480,w:100,h:16,dx:0,dy:-1.2,range:60,t:0},{x:610,y:360,w:90,h:16,dx:1.4,dy:0,range:80,t:0}];
-    spikesArr=[[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]];
-    blobs=[{x:330,y:364,w:26,h:18,vx:1,minX:320,maxX:440},{x:740,y:244,w:26,h:18,vx:-1,minX:720,maxX:840}];
-    hearts=[{x:185,y:400,r:7,taken:false},{x:350,y:340,r:7,taken:false},{x:550,y:280,r:7,taken:false},{x:750,y:220,r:7,taken:false},{x:880,y:150,r:7,taken:false}];
-    collectCount=0; lives=3; won=false; startTime=performance.now(); livesEl.textContent=lives; heartsEl.textContent=collectCount;
-  }
-  function rectsOverlap(a,b){return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;}
-  function pointInTriangle(px,py,ax,ay,bx,by,cx,cy){const v0x=cx-ax,v0y=cy-ay,v1x=bx-ax,v1y=by-ay,v2x=px-ax,v2y=py-ay;const dot00=v0x*v0x+v0y*v0y,dot01=v0x*v1x+v0y*v1y,dot02=v0x*v2x+v0y*v2y,dot11=v1x*v1x+v1y*v1y,dot12=v1x*v2x+v1y*v2y;const inv=1/(dot00*dot11-dot01*dot01);const u=(dot11*dot02-dot01*dot12)*inv,v=(dot00*dot12-dot01*dot02)*inv;return (u>=0)&&(v>=0)&&((u+v)<1);}
-  const GRAV=0.5,JUMP=10.2,SPEED=2.4,MAX_VY=16;
-  function update(dt){
-    const left=keys['ArrowLeft']||keys['a']||keys['A'];
-    const right=keys['ArrowRight']||keys['d']||keys['D'];
-    const jump=keys['ArrowUp']||keys['w']||keys['W']||keys[' '];
-    player.vx=0; if(left) player.vx=-SPEED,player.dir=-1; if(right) player.vx=SPEED,player.dir=1;
-    player.vy+=GRAV; if(player.vy>MAX_VY) player.vy=MAX_VY;
-    player.x+=player.vx;
-    for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rectsOverlap(player,r)){ if(player.vx>0) player.x=r.x-player.w; else if(player.vx<0) player.x=r.x+r.w; }}
-    player.y+=player.vy; player.onGround=false;
-    for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rect
+    function loop(ts){
+      update();
+      draw(ts||performance.now());
+      requestAnimationFrame(loop);
+    }
+
+    // start direkt
+    requestAnimationFrame(loop);
+
+    // ===== simple audio toggle so knappen gör något =====
+    let ac, timer, musicOn = true;
+    function initAudio(){ if(ac) return; ac=new (window.AudioContext||window.webkitAudioContext)(); startMusic(); }
+    function beep(f=440,d=0.12,type='triangle',g=0.15){ if(!ac) return; const o=ac.createOscillator(), gg=ac.createGain(); o.type=type; o.frequency.value=f; gg.gain.value=g; o.connect(gg); gg.connect(ac.destination); o.start(); gg.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+d); o.stop(ac.currentTime+d+0.02); }
+    function startMusic(){ if(!ac||!musicOn) return; stopMusic(); let i=0, seq=[262,330,392,523,392,330,294,330]; timer=setInterval(()=>{beep(seq[i++%seq.length],0.15);},350); }
+    function stopMusic(){ if(timer) clearInterval(timer); timer=null; }
+    document.getElementById('btn-audio').addEventListener('click', ()=>{
+      initAudio(); musicOn=!musicOn; event.target.textContent = musicOn?'🔊':'🔈'; musicOn?startMusic():stopMusic();
+    });
+    document.body.addEventListener('keydown', ()=>initAudio(), {once:true});
+  })();
+  </script>
+</body>
+</html>
