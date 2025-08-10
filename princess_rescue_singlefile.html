@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Princess Rescue — Single File (18+)</title>
+<style>
+:root { --bg:#fff9fc; --ink:#3a2f35; --line:#f2d9e8; --panel:#ffffffcc; --pill:#f7e7f1; --cta:#f9dff0; --shadow:0 10px 30px rgba(125,89,110,.12); }
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,var(--bg),#ffeef7);font-family:ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.topbar{position:sticky;top:0;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;justify-content:space-between}
+.brand{font-weight:800} .pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;box-shadow:var(--shadow)}
+.pill.small{padding:6px 10px;font-size:.9rem}
+.cta{background:var(--cta);border:none;border-radius:12px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);font-weight:700}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
+.wrap{max-width:1000px;margin:0 auto;padding:16px;position:relative}
+canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);background:#fefcff}
+.hud{position:absolute;top:26px;left:26px;display:flex;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;align-items:center}
+.stat{font-weight:700;color:#6b5b64}
+dialog::backdrop{background:rgba(0,0,0,.35)} dialog{border:none;border-radius:16px;padding:0}
+dialog .sheet{background:#fff;padding:16px;min-width:min(520px,92vw);border-radius:16px}
+.rescue .scene{height:180px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#fff,#ffeef7)}
+.rescue .princess{font-weight:800;color:#e06aa6;text-shadow:1px 1px #fff}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">♡ Princess Rescue</div>
+    <nav>
+      <button id="btn-how" class="pill">Hur spelar man?</button>
+      <button id="btn-shop" class="pill">Butik</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div class="hud">
+      <div class="stat">❤ <span id="lives">3</span></div>
+      <div class="stat">★ <span id="hearts">0</span>/5</div>
+      <div class="stat">⏱ <span id="time">0.0s</span></div>
+      <button id="btn-audio" class="pill small">🔊</button>
+    </div>
+  </main>
+
+  <dialog id="ageGate"><form method="dialog" class="sheet">
+    <h2>Bekräfta ålder</h2>
+    <p>Detta är ett vuxet utrymme men spelet i sig är icke-explicit. Du måste vara 18+ för att gå vidare.</p>
+    <label class="check"><input type="checkbox" id="confirm18" required> Jag är 18 år eller äldre</label>
+    <menu><button class="ghost" value="cancel">Avbryt</button><button class="cta" value="ok" id="enter">Fortsätt</button></menu>
+  </form></dialog>
+
+  <dialog id="how"><form method="dialog" class="sheet">
+    <h3>Hur spelar man</h3>
+    <ul><li>A/D eller ←/→ = gå</li><li>W/↑/Space = hoppa</li><li>Undvik spikar och blobbar</li><li>Samla 5 hjärtan och nå prinsessan</li></ul>
+    <menu><button class="cta" id="startGame">Starta</button></menu>
+  </form></dialog>
+
+  <dialog id="shop"><form method="dialog" class="sheet">
+    <h3>Butik (demo)</h3>
+    <p>Detta är en demo. Anslut betalning i produktion.</p>
+    <button class="pill" id="btn-membership">Köp medlemskap</button>
+    <menu><button class="ghost">Stäng</button></menu>
+  </form></dialog>
+
+  <dialog id="rescue"><form method="dialog" class="sheet rescue">
+    <div class="scene"><div class="princess">Thank you, hero!</div></div>
+    <p>Du räddade prinsessan 💖</p>
+    <menu><button class="ghost" id="btn-replay">Spela igen</button><button class="cta" id="btn-upgrade">Lås upp bonus (demo)</button></menu>
+  </form></dialog>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const livesEl = document.getElementById('lives');
+  const heartsEl = document.getElementById('hearts');
+  const timeEl = document.getElementById('time');
+  const dlgAge = document.getElementById('ageGate');
+  const dlgHow = document.getElementById('how');
+  const dlgShop = document.getElementById('shop');
+  const dlgRescue = document.getElementById('rescue');
+  const btnHow = document.getElementById('btn-how');
+  const btnShop = document.getElementById('btn-shop');
+  const btnMembership = document.getElementById('btn-membership');
+  const btnReplay = document.getElementById('btn-replay');
+  const btnUpgrade = document.getElementById('btn-upgrade');
+  const confirm18 = document.getElementById('confirm18');
+  const enter = document.getElementById('enter');
+  const startBtn = document.getElementById('startGame');
+  const audioBtn = document.getElementById('btn-audio');
+
+  // Audio (procedural, no files)
+  let ac, musicOn = true, musicTimer;
+  function initAudio(){ if(ac) return; ac = new (window.AudioContext||window.webkitAudioContext)(); startMusic(); }
+  function beep(freq=440,dur=0.12,type='square',gain=0.25){ if(!ac) return; const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(ac.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur); o.stop(ac.currentTime+dur+0.02); }
+  function chord(freqs,d=0.25){ freqs.forEach(f=>beep(f,d,'triangle',0.2)); }
+  function startMusic(){ if(!ac||!musicOn) return; stopMusic(); const seq=[262,330,392,523,392,330,294,330]; let i=0; musicTimer=setInterval(()=>{beep(seq[i%seq.length],0.15,'triangle',0.14); i++;},320); }
+  function stopMusic(){ if(musicTimer) clearInterval(musicTimer); musicTimer=null; }
+  audioBtn.addEventListener('click',()=>{ initAudio(); musicOn=!musicOn; audioBtn.textContent=musicOn?'🔊':'🔈'; if(musicOn) startMusic(); else stopMusic(); });
+
+  // Age gate & dialogs
+  function ensureAge(){ const ok=localStorage.getItem('age_ok')==='yes'; if(!ok) setTimeout(()=>dlgAge.showModal(),10); }
+  ensureAge();
+  enter?.addEventListener('click',(e)=>{ if(!confirm18.checked){ e.preventDefault(); alert('Du måste bekräfta 18+.'); } else localStorage.setItem('age_ok','yes'); });
+  btnHow.addEventListener('click',()=>dlgHow.showModal());
+  btnShop.addEventListener('click',()=>dlgShop.showModal());
+  startBtn?.addEventListener('click',()=>{ initAudio(); });
+  document.body.addEventListener('keydown',()=>initAudio(),{once:true});
+  btnMembership?.addEventListener('click',(e)=>{ e.preventDefault(); alert('Demo: koppla betalning i produktion.'); });
+  btnReplay?.addEventListener('click',()=>{ dlgRescue.close(); reset(); });
+  btnUpgrade?.addEventListener('click',()=>{ dlgRescue.close(); dlgShop.showModal(); });
+
+  // Input
+  const keys={}; addEventListener('keydown',e=>keys[e.key]=true); addEventListener('keyup',e=>keys[e.key]=false);
+
+  // Game state
+  const sky='#ffeef7', ground='#d7f0ff', block='#ffe1ef', spike='#f6a0c1', blobC='#c6a3ff', heartC='#ff7aa2';
+  let player, princess, platforms, movers, spikesArr, blobs, hearts, startTime, collectCount, lives, won;
+
+  function reset(){
+    player={x:60,y:420,w:28,h:36,vx:0,vy:0,onGround:false,dir:1};
+    princess={x:840,y:140,w:28,h:44};
+    platforms=[[0,500,960,40],[160,440,120,16],[320,380,120,16],[520,320,120,16],[720,260,120,16],[780,180,140,16]];
+    movers=[{x:240,y:480,w:100,h:16,dx:0,dy:-1.2,range:60,t:0},{x:610,y:360,w:90,h:16,dx:1.4,dy:0,range:80,t:0}];
+    spikesArr=[[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]];
+    blobs=[{x:330,y:364,w:26,h:18,vx:1,minX:320,maxX:440},{x:740,y:244,w:26,h:18,vx:-1,minX:720,maxX:840}];
+    hearts=[{x:185,y:400,r:7,taken:false},{x:350,y:340,r:7,taken:false},{x:550,y:280,r:7,taken:false},{x:750,y:220,r:7,taken:false},{x:880,y:150,r:7,taken:false}];
+    collectCount=0; lives=3; won=false; startTime=performance.now(); livesEl.textContent=lives; heartsEl.textContent=collectCount;
+  }
+  function rectsOverlap(a,b){return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;}
+  function pointInTriangle(px,py,ax,ay,bx,by,cx,cy){const v0x=cx-ax,v0y=cy-ay,v1x=bx-ax,v1y=by-ay,v2x=px-ax,v2y=py-ay;const dot00=v0x*v0x+v0y*v0y,dot01=v0x*v1x+v0y*v1y,dot02=v0x*v2x+v0y*v2y,dot11=v1x*v1x+v1y*v1y,dot12=v1x*v2x+v1y*v2y;const inv=1/(dot00*dot11-dot01*dot01);const u=(dot11*dot02-dot01*dot12)*inv,v=(dot00*dot12-dot01*dot02)*inv;return (u>=0)&&(v>=0)&&((u+v)<1);}
+  const GRAV=0.5,JUMP=10.2,SPEED=2.4,MAX_VY=16;
+  function update(dt){
+    const left=keys['ArrowLeft']||keys['a']||keys['A'];
+    const right=keys['ArrowRight']||keys['d']||keys['D'];
+    const jump=keys['ArrowUp']||keys['w']||keys['W']||keys[' '];
+    player.vx=0; if(left) player.vx=-SPEED,player.dir=-1; if(right) player.vx=SPEED,player.dir=1;
+    player.vy+=GRAV; if(player.vy>MAX_VY) player.vy=MAX_VY;
+    player.x+=player.vx;
+    for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rectsOverlap(player,r)){ if(player.vx>0) player.x=r.x-player.w; else if(player.vx<0) player.x=r.x+r.w; }}
+    player.y+=player.vy; player.onGround=false;
+    for(const p of platforms){const r={x:p[0],y:p[1],w:p[2],h:p[3]}; if(rectsOverlap(player,r)){ if(player.vy>0){player.y=r.y-player.h;player.vy=0;player.onGround=true;} else if(player.vy<0){player.y=r.y+r.h;player.vy=0;} }}
+    for(const m of movers){m.t+=dt;const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy;const r={x:m.x+ox,y:m.y+oy,w:m.w,h:m.h}; if(rectsOverlap(player,r)&&player.vy>=0){player.y=r.y-player.h;player.vy=0;player.onGround=true;player.x+=(m.dx!==0?Math.cos(m.t*0.001)*m.range*0.03*m.dx:0);}}
+    if(jump && player.onGround){player.vy=-JUMP; player.onGround=false;}
+    for(const s of [[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]]){const[sx,sy,size]=s;const px=player.x+player.w/2,py=player.y+player.h-2; if(pointInTriangle(px,py,sx,sy,sx+size,sy,sx+size/2,sy-size)){die();break;}}
+    for(const b of blobs){b.x+=b.vx; if(b.x<b.minX||b.x+b.w>b.maxX) b.vx*=-1; if(rectsOverlap(player,b)){die();break;}}
+    for(const h of hearts){if(!h.taken){const dx=(player.x+player.w/2)-h.x,dy=(player.y+player.h/2)-h.y; if(Math.hypot(dx,dy)<20){h.taken=true;collectCount++;heartsEl.textContent=collectCount;} }}
+    const r={x:princess.x,y:princess.y,w:princess.w,h:princess.h}; if(collectCount>=5 && rectsOverlap(player,r)){showRescue();}
+    const t=(performance.now()-startTime)/1000; timeEl.textContent=t.toFixed(1)+'s';
+  }
+  function die(){ livesEl.textContent=--lives; if(lives<=0) reset(); else {player.x=60;player.y=420;player.vx=0;player.vy=0;}}
+  function showRescue(){ dlgRescue.showModal(); won=true; stopMusic(); }
+  function draw(){ ctx.fillStyle=sky; ctx.fillRect(0,0,W,H); ctx.fillStyle='#d7f0ff'; ctx.fillRect(0,440,W,100);
+    ctx.fillStyle=block; for(const p of platforms) ctx.fillRect(p[0],p[1],p[2],p[3]);
+    for(const m of movers){const ox=Math.sin(m.t*0.001)*m.range*m.dx,oy=Math.sin(m.t*0.001)*m.range*m.dy; ctx.fillStyle='#ffd6ec'; ctx.fillRect(m.x+ox,m.y+oy,m.w,m.h);}
+    ctx.fillStyle=spike; for(const s of [[220,500,28],[248,500,28],[276,500,28],[420,500,28],[448,500,28],[476,500,28],[520,500,28],[548,500,28],[400,364,28],[580,308,28]]){const[x,y,size]=s; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+size,y); ctx.lineTo(x+size/2,y-size); ctx.closePath(); ctx.fill();}
+    ctx.fillStyle='#c6a3ff'; for(const b of blobs) ctx.fillRect(b.x,b.y,b.w,b.h);
+    for(const h of hearts){ if(h.taken) continue; ctx.fillStyle=heartC; ctx.fillRect(h.x-2,h.y,4,4); ctx.fillRect(h.x-4,h.y+2,8,4); ctx.fillRect(h.x-6,h.y+4,12,4); ctx.fillRect(h.x-4,h.y+8,8,4); ctx.fillRect(h.x-2,h.y+10,4,4); }
+    ctx.fillStyle='#ffb3c7'; ctx.fillRect(princess.x,princess.y,princess.w,princess.h);
+    ctx.fillStyle='#222'; ctx.fillRect(player.x,player.y,player.w,player.h);
+  }
+  let last=performance.now(),won=false; function loop(t){const dt=t-last; last=t; if(!won) update(dt); draw(); requestAnimationFrame(loop);}
+  let lives=3, blobs=[], hearts=[];
+  function initActors(){ blobs=[{x:330,y:364,w:26,h:18,vx:1,minX:320,maxX:440},{x:740,y:244,w:26,h:18,vx:-1,minX:720,maxX:840}]; hearts=[{x:185,y:400,r:7,taken:false},{x:350,y:340,r:7,taken:false},{x:550,y:280,r:7,taken:false},{x:750,y:220,r:7,taken:false},{x:880,y:150,r:7,taken:false}]; }
+  if(!localStorage.getItem('seen_how')){ setTimeout(()=>{ dlgHow.showModal(); localStorage.setItem('seen_how','yes'); },50); }
+  initActors(); reset(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
