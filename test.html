@@ -1,34 +1,67 @@
 <!doctype html>
+<html lang="sv">
 <meta charset="utf-8">
 <title>PR test</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  body{margin:0;display:grid;place-items:center;height:100vh;background:#ffeef7;font-family:system-ui}
-  canvas{border:1px solid #f2d9e8;border-radius:12px;background:#fff0f6;width:min(92vw,960px);height:auto}
-  .hud{position:fixed;top:10px;left:10px;background:#fff;border:1px solid #f2d9e8;border-radius:10px;padding:6px 10px}
-  button{margin-left:8px}
+  :root{--line:#f2d9e8}
+  body{margin:0;display:grid;place-items:center;min-height:100vh;background:#ffeef7;font-family:system-ui}
+  .hud{position:fixed;top:10px;left:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+  .hud button{margin-left:8px}
+  canvas{border:1px solid var(--line);border-radius:12px;background:#fff0f6;width:min(92vw,960px);height:auto}
 </style>
-<div class="hud">⏱ <span id="t">0.0</span>s <button id="snd">🔇 Lofi</button></div>
+
+<div class="hud">
+  ⏱ <span id="t">0.0</span>s
+  <button id="snd" type="button">🔇 Lofi</button>
+</div>
+
 <canvas id="c" width="960" height="540"></canvas>
+
+<!-- Ladda samma lofi.mp3 som ligger i repo-roten -->
 <audio id="bgm" src="./lofi.mp3" preload="auto" loop playsinline></audio>
+
 <script>
 (() => {
-  const cv = document.getElementById('c'), g = cv.getContext('2d');
-  const tEl = document.getElementById('t'), btn = document.getElementById('snd'), bgm = document.getElementById('bgm');
-  bgm.volume = 0.15; let music = false;
+  const cv = document.getElementById('c');
+  const g = cv.getContext('2d');
+  const tEl = document.getElementById('t');
+  const btn = document.getElementById('snd');
+  const bgm = document.getElementById('bgm');
 
-  btn.onclick = () => {
-    if (!music) { bgm.play().then(()=>{ music = true; btn.textContent='🎧 Lofi'; }).catch(e=>alert('Klicka igen / höj volym')); }
-    else { bgm.pause(); music=false; btn.textContent='🔇 Lofi'; }
-  };
+  // Musik startar ENDAST på klick (Safari/Chrome-policy)
+  let music = false;
+  bgm.volume = 0.15;   // låg volym
+  bgm.muted = false;   // inte mutad
 
-  let x = 20, v = 2, t0 = performance.now();
+  btn.addEventListener('click', () => {
+    if (!music) {
+      bgm.play().then(() => {
+        music = true;
+        btn.textContent = '🎧 Lofi';
+      }).catch(err => {
+        console.warn('Audio blocked:', err);
+        alert('Om det är tyst: höj volym, slå av tyst läge 🔔 och klicka igen.');
+      });
+    } else {
+      bgm.pause();
+      music = false;
+      btn.textContent = '🔇 Lofi';
+    }
+  });
+
+  // Enkel animation så vi ser att JS rullar
+  let t0 = performance.now();
+  let x = 60, v = 2;
   function loop(t){
     tEl.textContent = ((t - t0)/1000).toFixed(1);
     g.fillStyle = '#ffe7f2'; g.fillRect(0,0,cv.width,cv.height);
-    g.fillStyle = '#ff7aa2'; g.beginPath(); g.arc(x, 200, 20, 0, Math.PI*2); g.fill();
-    x += v; if (x<20 || x>cv.width-20) v *= -1;
+    g.fillStyle = '#ff6fa8';
+    g.beginPath(); g.arc(x, cv.height/2, 18, 0, Math.PI*2); g.fill();
+    x += v; if (x < 18 || x > cv.width-18) v *= -1;
     requestAnimationFrame(loop);
   }
-  loop(performance.now());
+  requestAnimationFrame(loop);
 })();
 </script>
+</html>
